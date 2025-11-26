@@ -14,7 +14,7 @@ project-root/
         DML.sql     
     app/      
         PostgreSQLJDBCConnection.java        
-        postgresql-42.7.8.jar    <-JDBC driver downloaded from:https://jdbc.postgresql.org/download->            
+        postgresql-42.7.8.jar    <-JDBC driver downloaded from:https://jdbc.postgresql.org/download             
  
 
 Functions used in PostgreSQLJDBCConnection.java:      
