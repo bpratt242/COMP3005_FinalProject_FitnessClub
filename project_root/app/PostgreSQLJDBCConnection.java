@@ -61,6 +61,7 @@ public class PostgreSQLJDBCConnection {
 
             String choice = scanner.nextLine();
 
+            //calling function based on user's choice
             switch(choice){
                 case "1":
                     memberMenu(scanner);
@@ -84,6 +85,7 @@ public class PostgreSQLJDBCConnection {
     //function that presents the member menu to user and options for the user to choose from
     private static void memberMenu(Scanner scanner){
          while(true){
+             //options shown to user
             System.out.println("Member Menu");
             System.out.println("1. Register new member");
             System.out.println("2. Update profile");
@@ -131,6 +133,7 @@ public class PostgreSQLJDBCConnection {
             return;
         }
 
+        //gathering input from user for each attribute
         System.out.println("Date of birth (YYYY-MM-DD): ");
         String birthDate = scanner.nextLine();
 
@@ -145,15 +148,16 @@ public class PostgreSQLJDBCConnection {
 
         System.out.println("Target weight (kg): ");
         String targetWeight = scanner.nextLine();
-
+        
         String addSql = "INSERT INTO members (member_name, date_of_birth, gender, phone_number, email_address, target_weight) " +
         "VALUES (?, ?, ?, ?, ?, ?)";
 
+        //adding a new row with user's input to the SQL database
         try(PreparedStatement ps = conn.prepareStatement(addSql)){
             //only required value (primary key)
             ps.setString(1, name);
 
-            //rest of the values can be null
+            //rest of the values can be null or "unknown"
             if(birthDate.isEmpty()){
                 ps.setDate(2, null);
             }
@@ -189,7 +193,9 @@ public class PostgreSQLJDBCConnection {
                 ps.setDouble(6, Double.parseDouble(targetWeight));
             }
 
+            //updating the database with new row
             int rows = ps.executeUpdate();
+            //making sure row was added, else will print "unable to add member."
             if(rows > 0){
                 System.out.println("Member has been added successfully.");
             }
@@ -224,6 +230,7 @@ public class PostgreSQLJDBCConnection {
         String selectSQL = "SELECT phone_number, email_address, target_weight " +
         "FROM members WHERE member_id = ?";
 
+        //adding a new row with user's input to the SQL database
         try(PreparedStatement selectPs = conn.prepareStatement(selectSQL)){
             selectPs.setInt(1, memberId);
 
@@ -236,6 +243,7 @@ public class PostgreSQLJDBCConnection {
                     System.out.println("There is no member with that ID.");
                     return;
                 }
+                //getting user's present info from database
                 currentPhoneNumber = rs.getString("phone_number");
                 currentEmail = rs.getString("email_address");
                 currentTargetWeight = rs.getDouble("target_weight");
@@ -272,6 +280,7 @@ public class PostgreSQLJDBCConnection {
             String updateSQL = "UPDATE members " + "SET phone_number = ?, email_address = ?, target_weight = ? " +
             "WHERE member_id = ?";
 
+            //updating the selected row with a new information
             try(PreparedStatement updatePs = conn.prepareStatement(updateSQL)){
                 updatePs.setString(1, updatedPhoneNumber);
                 updatePs.setString(2, updatedEmail);
@@ -279,6 +288,7 @@ public class PostgreSQLJDBCConnection {
                 updatePs.setInt(4, memberId);
 
                 int rows = updatePs.executeUpdate();
+                //making sure row was added, if not print, "Profile has not been updated."
                 if(rows > 0){
                     System.out.println("Profile has been updated.");
                 }
@@ -303,7 +313,7 @@ public class PostgreSQLJDBCConnection {
         System.out.print("Member ID: ");
         int memberId;
         
-        //recording user input
+        //error checking
         try{
             memberId = Integer.parseInt(scanner.nextLine());
         }
@@ -312,6 +322,7 @@ public class PostgreSQLJDBCConnection {
             return;
         }
 
+        //asking user for information
         System.out.println("Please enter your information below: ");
         System.out.print("Weight (kg): ");
         String weight = scanner.nextLine();
@@ -322,11 +333,13 @@ public class PostgreSQLJDBCConnection {
         System.out.print("Height (cm): ");
         String height = scanner.nextLine();
 
+        //recording Date based on what date is it currently 
         Date recordAt = Date.valueOf(LocalDate.now());
 
         String sql = "INSERT INTO health_metric(member_id, weight_kg, heart_rate, height, recorded_at) " +
         "VALUES (?, ?, ?, ?, ?)";
 
+        //inserting new row and information into the database table
         try(PreparedStatement ps = conn.prepareStatement(sql)){
             ps.setInt(1, memberId);
             ps.setDouble(2, Double.parseDouble(weight));
@@ -335,6 +348,7 @@ public class PostgreSQLJDBCConnection {
             ps.setDate(5, recordAt);
 
             int rows = ps.executeUpdate();
+            //making sure row was added
             if(rows > 0){
                     System.out.println("Metric has been recorded.");
             }
@@ -342,6 +356,7 @@ public class PostgreSQLJDBCConnection {
                 System.out.println("Unable to add metric.");
             }   
         }
+        //error handling
         catch(SQLException e){
             System.out.println("There was an error while inserting metric: " + e.getMessage());
         }
@@ -356,6 +371,7 @@ public class PostgreSQLJDBCConnection {
         System.out.println("Please enter your Member ID: ");
         int memberId;
 
+        //error checking
         try{
             memberId = Integer.parseInt(scanner.nextLine());
         }
@@ -363,7 +379,7 @@ public class PostgreSQLJDBCConnection {
             System.out.println("Invalid member ID.");
             return;
         }
-
+        //getting latest health metric for member from database
         String metricSql = "SELECT m.member_name, m.target_weight, " +
         "       hm.weight_kg, hm.heart_rate, hm.height, hm.recorded_at " +
         "FROM members m " + 
@@ -372,6 +388,7 @@ public class PostgreSQLJDBCConnection {
         "ORDER BY hm.recorded_at DESC " +
         "LIMIT 1";
 
+        //getting all PT sessions for this member from database
         String sessionsSql = "SELECT ps.session_id, t.trainer_name, r.room_name, " +
         "       ps.start_time, ps.end_time, ps.session_status " +
         "FROM pt_session ps " + 
@@ -386,6 +403,7 @@ public class PostgreSQLJDBCConnection {
 
                 try(ResultSet rs = ps.executeQuery()){
                     if(rs.next()){
+                        //printing user's health metrics and personal information
                         System.out.println("Member: " + rs.getString("member_name"));
                         System.out.println("Target weight: " + rs.getDouble("target_weight"));
                         System.out.println("Last recorded weight: " + rs.getDouble("weight_kg"));
@@ -407,9 +425,9 @@ public class PostgreSQLJDBCConnection {
                     boolean any = false;
                     while(rs2.next()){
                         any = true;
+                        //printing all of user's sessions
                         System.out.printf(
-//change this format
-                            "Session %d: Trainer=%s, Room=%s, %d-%d, Status=%s%n",
+                            "Session %d: Trainer= %s, Room= %s, %d-%d, Status= %s%n",
                             rs2.getInt("session_id"),
                             rs2.getString("trainer_name"),
                             rs2.getString("room_name"),
@@ -424,6 +442,7 @@ public class PostgreSQLJDBCConnection {
                 }
             }
         }
+        //error checking
         catch(SQLException e){
             System.out.println("Error loading dashboard: " + e.getMessage());
         }   
@@ -432,6 +451,7 @@ public class PostgreSQLJDBCConnection {
     //function that presents menu for trainers to choose an option from
     private static void trainerMenu(Scanner scanner){
         while(true){
+            //presenting choices to user
             System.out.println("Trainer Menu");
             System.out.println("1. Set availability");
             System.out.println("2. View my schedule");
@@ -497,12 +517,14 @@ public class PostgreSQLJDBCConnection {
         String sql = "INSERT INTO trainer_availability(trainer_id, start_time, end_time) " +
         "VALUES (?, ?, ?)";
 
+        //adding information to new row
         try(PreparedStatement ps = conn.prepareStatement(sql)){
             ps.setInt(1, trainerId);
             ps.setInt(2, startTime);
             ps.setInt(3, endTime);
 
             int rows = ps.executeUpdate();
+            //checking if row was added, if not print: "There was an overlap in availability or another problem."
             if(rows > 0){
                 System.out.println("Availability added.");
             }
@@ -511,6 +533,7 @@ public class PostgreSQLJDBCConnection {
             }
 
         }
+        //error checking
         catch(SQLException e){
             System.out.println("There was an error setting trainer availability: " + e.getMessage());
         }
@@ -531,6 +554,7 @@ public class PostgreSQLJDBCConnection {
             return;
         }
 
+        //getting all of trainer's PT sessions
         String sql = "SELECT session_id, member_name, room_name, " +
         "       start_time, end_time, session_status " + 
         "FROM trainer_schedule " +
@@ -544,9 +568,9 @@ public class PostgreSQLJDBCConnection {
                     boolean any = false;
                     while(rs.next()){
                         any = true;
+                        //printing user's information
                         System.out.printf(
-//change this format
-                            "Session %d: Member=%s, Room=%s, %d-%d, Status=%s%n",
+                            "Session %d: Member= %s, Room= %s, %d-%d, Status= %s%n",
                             rs.getInt("session_id"),
                             rs.getString("member_name"),
                             rs.getString("room_name"),
@@ -560,6 +584,7 @@ public class PostgreSQLJDBCConnection {
                     }
                 }
             }
+        //error checking
         catch(SQLException e){
             System.out.println("Error loading trainer schedule: " + e.getMessage());
         }   
@@ -569,6 +594,7 @@ public class PostgreSQLJDBCConnection {
     //function that provides a menu for administrators choices to choose from
     private static void adminMenu(Scanner scanner){
         while(true){
+        //presenting options to user
         System.out.println("Admin Menu");
         System.out.println("1. Book PT session");
         System.out.println("2. View room schedule");
@@ -576,6 +602,7 @@ public class PostgreSQLJDBCConnection {
         System.out.print("Choice: ");
         String choice = scanner.nextLine();
 
+        //calling a certain function based on user's input
         switch(choice){
             case "1":
                 bookPtSession(scanner);
@@ -618,49 +645,54 @@ public class PostgreSQLJDBCConnection {
             return;
         }
 
-        //checking if trainer is availabile in the time that the admin inputted
         try{
+            //creating new row in trainer availability table
             String availableSql = "SELECT 1 FROM trainer_availability " +
             "WHERE trainer_id = ? " +
             "   AND start_time <= ? " +
             "   AND end_time >= ? " +
             "LIMIT 1";
 
+            //adding new information to row
             try(PreparedStatement ps = conn.prepareStatement(availableSql)){
                 ps.setInt(1, trainerId);
                 ps.setInt(2, startTime);
                 ps.setInt(3, endTime);
 
                 try(ResultSet rs = ps.executeQuery()){
+                    //prints if no new row was added
                     if(!rs.next()){
                         System.out.println("Trainer is not available during that time.");
                         return;
                     }
                 }
             }
-            //checking if room is available during the time that the admin inputted
+            //checking room status from PT sesssion table
             String roomSql = "SELECT 1 FROM pt_session " +
             "WHERE room_id = ? " +
             "   AND session_status = 'scheduled' " +
             "   AND NOT (end_time <= ? OR start_time >= ?) " +
             "LIMIT 1";
 
+            //adding new row to room schedule
             try(PreparedStatement ps = conn.prepareStatement(roomSql)){
                 ps.setInt(1, roomId);
                 ps.setInt(2, startTime);
                 ps.setInt(3, endTime);
-
+                
                 try(ResultSet rs = ps.executeQuery()){
+                    //checking to see if a new row was added
                     if(rs.next()){
                         System.out.println("Room is booked during this time.");
                         return;
                     }
                 }
             }
-            //inserting session 
+            //inserting new row to PT session table
             String insertSql = "INSERT INTO pt_session(member_id, trainer_id, room_id, start_time, end_time, session_status) " + 
             "VALUES (?, ?, ?, ?, ?, 'scheduled')";
 
+            //adding values to new row in PT session table
             try(PreparedStatement ps = conn.prepareStatement(insertSql)){
                 ps.setInt(1, memberId);
                 ps.setInt(2, trainerId);
@@ -677,6 +709,7 @@ public class PostgreSQLJDBCConnection {
                 }
             } 
         }
+        //error checking
         catch(SQLException e){
             System.out.println("There was an error while booking the session: " + e.getMessage());
         }
@@ -697,6 +730,7 @@ public class PostgreSQLJDBCConnection {
             return;
         }
 
+        //gathering information from member, pt_session and trainer tables
         String sql = "SELECT ps.session_id, m.member_name, t.trainer_name, " +
         "       ps.start_time, ps.end_time, ps.session_status " + 
         "FROM pt_session ps " +
@@ -712,9 +746,9 @@ public class PostgreSQLJDBCConnection {
                     boolean any = false;
                     while(rs.next()){
                         any = true;
+                        //printing information to user
                         System.out.printf(
-//change this format
-                            "Session %d: Member=%s, Trainer=%s, %d-%d, Status=%s%n",
+                            "Session %d: Member= %s, Trainer= %s, %d-%d, Status= %s%n",
                             rs.getInt("session_id"),
                             rs.getString("member_name"),
                             rs.getString("trainer_name"),
@@ -723,11 +757,13 @@ public class PostgreSQLJDBCConnection {
                             rs.getString("session_status")
                         );
                     }
+                    //checking to see if row exists
                     if(!any){
                         System.out.println("No sessions are scheduled for this room.");
                     }
                 }
             }
+             //error handling
         catch(SQLException e){
             System.out.println("Error loading room schedule: " + e.getMessage());
         }   
